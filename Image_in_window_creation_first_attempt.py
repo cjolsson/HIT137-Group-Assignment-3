@@ -1,6 +1,8 @@
+""" In Git Bash run, pip install BreezyPythonGUI """
 from breezypythongui import EasyFrame
 from tkinter.font import Font
 import tkinter as tk
+"""In Git Bash run, pip install pillow"""
 from PIL import Image, ImageTk
 
 
