@@ -1,3 +1,8 @@
+from breezypythongui import EasyFrame
+from tkinter.font import Font
+import tkinter as tk
+from PIL import Image, ImageTk
+
 
 """Set up the window"""
 class ImageDemo(EasyFrame):
@@ -14,7 +19,7 @@ class ImageDemo(EasyFrame):
         # image = image.rotate(-90)
 
         """Convert the resized image to Tkinter format"""
-        # self.image = ImageTk.PhotoImage(image)
+        self.image = ImageTk.PhotoImage(image)
 
         """Add image label"""
         imageLabel = self.addLabel(text="", row=0, column=0, sticky="NSEW")
