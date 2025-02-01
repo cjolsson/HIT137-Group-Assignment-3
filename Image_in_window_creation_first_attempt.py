@@ -33,7 +33,7 @@ class ImageDemo(EasyFrame):
             title="Select an Image", 
             filetypes=[("Image Files", "*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tiff")])
 
-         if file_path:
+        if file_path:
             """ Remove any characters not needed"""
             file_path = os.path.normpath(file_path)
 
