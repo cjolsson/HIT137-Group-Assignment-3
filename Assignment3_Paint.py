@@ -143,7 +143,7 @@ class ImageDemo(EasyFrame):  # Set up the window
             x2 = min(self.image_Original.width, x2)
             y2 = min(self.image_Original.height, y2)
 
-            self.cropped_image = self.image_Original.crop((x1, y1, x2, y2))
+            self.cropped_image = self.image_Copy.crop((x1, y1, x2, y2))
             self.cropped_image.thumbnail((300, 300))
             self.cropped_image_display = ImageTk.PhotoImage(self.cropped_image)
             self.resized_image_id = self.canvas.create_image(810, 0, anchor="nw", image=self.cropped_image_display)  # Display cropped image next to original
