@@ -58,7 +58,7 @@ class ImageDemo(EasyFrame):  # Set up the window
         crop_button.pack(side=tk.TOP, pady=5)
 
     def resize_slider(self):  # Create the resize slider
-        self.slider = tk.Scale(self, from_=1, to=300, orient=tk.HORIZONTAL, command=self.resize_image)
+        self.slider = tk.Scale(self, from_=1, to=600, orient=tk.HORIZONTAL, command=self.resize_image)
         self.slider.pack(side=tk.TOP, pady=5)
 
     def save_button(self):  # Create the save button
@@ -91,7 +91,7 @@ class ImageDemo(EasyFrame):  # Set up the window
 
             # Create and display the image
             self.image_Copy = self.image_Original.copy()
-            self.image_Copy.thumbnail((800, 600))  # Size image to fit canvas
+            self.image_Copy.thumbnail((600, 600))  # Size image to fit canvas
             self.image_Display = ImageTk.PhotoImage(self.image_Copy)  # Display the image
 
             self.canvas.create_image(0, 0, anchor="nw", image=self.image_Display)  # Display the image on the canvas
@@ -142,7 +142,9 @@ class ImageDemo(EasyFrame):  # Set up the window
             y1 = max(0, y1)
             x2 = min(self.image_Original.width, x2)
             y2 = min(self.image_Original.height, y2)
-
+            
+            if self.resized_image_id:
+                self.canvas.delete(self.resized_image_id)
             self.cropped_image = self.image_Copy.crop((x1, y1, x2, y2))
             self.cropped_image.thumbnail((300, 300))
             self.cropped_image_display = ImageTk.PhotoImage(self.cropped_image)
@@ -151,8 +153,11 @@ class ImageDemo(EasyFrame):  # Set up the window
 
     def resize_image(self, value):
         if self.cropped_image:
-            size = int(value)
-            resized_image = self.cropped_image.resize((size, size), Image.Resampling.LANCZOS)
+            width, height = self.cropped_image.size #retrieve dimensions of working image
+            new_width = int(value) #retrieve resize slider value
+            resize_scale = float(new_width/width)
+            new_height = round(height*resize_scale)
+            resized_image = self.cropped_image.resize((new_width, new_height), Image.Resampling.LANCZOS)
             self.resized_image_display = ImageTk.PhotoImage(resized_image)
             if self.resized_image_id:
                 self.canvas.delete(self.resized_image_id)
