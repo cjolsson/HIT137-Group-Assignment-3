@@ -14,6 +14,8 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, colorchooser
 from PIL import Image, ImageTk, ImageOps, ImageFilter, ImageGrab, ImageDraw
 
+rotation_angle = 0
+
 class ImageDemo(EasyFrame):  # Set up the window
     def __init__(self):
         EasyFrame.__init__(self, title="Demonstrate Image Handling", width=1200, height=800, background="white")
@@ -25,6 +27,7 @@ class ImageDemo(EasyFrame):  # Set up the window
         self.load_button()
         self.crop_button()
         self.resize_slider()
+        self.rotate_button()
         self.save_button()
         self.invert_button()
         self.draw_button()
@@ -48,7 +51,7 @@ class ImageDemo(EasyFrame):  # Set up the window
         self.redo_stack = []
         self.drawing = False
         self.draw_color = "black"
-
+        
     def load_button(self):  # Create the load button
         load_button = tk.Button(self, text="Select Image", command=self.load_image)
         load_button.pack(side=tk.TOP, pady=5)
@@ -59,7 +62,10 @@ class ImageDemo(EasyFrame):  # Set up the window
 
     def resize_slider(self):  # Create the resize slider
         self.slider = tk.Scale(self, from_=1, to=600, orient=tk.HORIZONTAL, command=self.resize_image)
-        self.slider.pack(side=tk.TOP, pady=5)
+
+    def rotate_button(self):  # Create the rotate button
+        rotate_button = tk.Button(self, text="Rotate", command=self.rotate_image)
+        rotate_button.pack(side=tk.TOP, pady=5)
 
     def save_button(self):  # Create the save button
         save_button = tk.Button(self, text="Save Image", command=self.save_image)
@@ -162,6 +168,24 @@ class ImageDemo(EasyFrame):  # Set up the window
             if self.resized_image_id:
                 self.canvas.delete(self.resized_image_id)
             self.resized_image_id = self.canvas.create_image(810, 0, anchor="nw", image=self.resized_image_display)
+
+    def rotate_image(self):
+        global rotation_angle
+        try:
+            rotation_angle += 90
+            self.rotated_image = self.cropped_image.rotate(rotation_angle, expand=True)
+            # reset image if angle is a multiple of 360 degrees
+            if rotation_angle % 360 == 0:
+                rotation_angle = 0
+            #clear canvas    
+            if self.resized_image_id:
+                self.canvas.delete(self.resized_image_id)
+            # convert the PIL image to a Tkinter PhotoImage and display it on the canvas
+            self.rotated_image_display = ImageTk.PhotoImage(self.rotated_image)
+            self.rotated_image_id = self.canvas.create_image(810, 0, anchor="nw", image=self.rotated_image_display)
+        # catches errors
+        except:
+            showerror(title='Rotate Image Error', message='Please select an image to rotate!')
 
     def invert_image(self):
         if self.cropped_image:
