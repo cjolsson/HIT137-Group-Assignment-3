@@ -14,15 +14,10 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, colorchooser
 from PIL import Image, ImageTk, ImageOps, ImageFilter, ImageGrab, ImageDraw
 
-rotation_angle = 0
-
 class ImageDemo(EasyFrame):  # Set up the window
     def __init__(self):
         EasyFrame.__init__(self, title="Demonstrate Image Handling", width=1200, height=800, background="white")
         self.setResizable(True)
-
-        self.image_label = tk.Label(self)  # Image label
-        self.image_label.pack(side=tk.TOP, pady=5)
 
         self.load_button()
         self.crop_button()
@@ -46,14 +41,17 @@ class ImageDemo(EasyFrame):  # Set up the window
         self.end_y = None
         self.cropped_image = None
         self.image_loaded = False
-        self.resized_image_id = None
         self.undo_stack = []
         self.redo_stack = []
         self.drawing = False
         self.draw_color = "black"
+        self.working_image = None
+        self.working_image_id = None
         
     def load_button(self):  # Create the load button
         load_button = tk.Button(self, text="Select Image", command=self.load_image)
+        self.image_label = tk.Label(self)  # Image label
+        self.image_label.pack(side=tk.TOP, pady=5)
         load_button.pack(side=tk.TOP, pady=5)
 
     def crop_button(self):  # Create the crop button
@@ -62,6 +60,8 @@ class ImageDemo(EasyFrame):  # Set up the window
 
     def resize_slider(self):  # Create the resize slider
         self.slider = tk.Scale(self, from_=1, to=600, orient=tk.HORIZONTAL, command=self.resize_image)
+        self.slider.set(300)  # Set default value to 300
+        self.slider.pack(side=tk.TOP, pady=5)
 
     def rotate_button(self):  # Create the rotate button
         rotate_button = tk.Button(self, text="Rotate", command=self.rotate_image)
@@ -94,7 +94,8 @@ class ImageDemo(EasyFrame):  # Set up the window
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to open image: {e}")
                 return
-
+            # Extract image label
+            self.image_label.config(text=f"Loaded Image: {file_path.split('/')[-1]}")
             # Create and display the image
             self.image_Copy = self.image_Original.copy()
             self.image_Copy.thumbnail((600, 600))  # Size image to fit canvas
@@ -106,6 +107,7 @@ class ImageDemo(EasyFrame):  # Set up the window
 
     def enable_crop(self):
         if self.image_loaded:
+            self.drawing = False
             self.canvas.bind("<ButtonPress-1>", self.on_button_press)
             self.canvas.bind("<B1-Motion>", self.on_mouse_drag)
             self.canvas.bind("<ButtonRelease-1>", self.on_button_release)
@@ -114,7 +116,7 @@ class ImageDemo(EasyFrame):  # Set up the window
 
     def on_button_press(self, event):
         if self.drawing:
-            self.last_x, self.last_y = event.x - 810, event.y
+            self.last_x, self.last_y = event.x - 610, event.y
         else:
             self.start_x = event.x
             self.start_y = event.y
@@ -122,7 +124,7 @@ class ImageDemo(EasyFrame):  # Set up the window
 
     def on_mouse_drag(self, event):
         if self.drawing:
-            self.draw_on_image(event.x - 810, event.y)
+            self.draw_on_image(event.x - 610, event.y)
         else:
             cur_x, cur_y = (event.x, event.y)
             self.canvas.coords(self.rect, self.start_x, self.start_y, cur_x, cur_y)
@@ -146,83 +148,73 @@ class ImageDemo(EasyFrame):  # Set up the window
             # Ensure coordinates are within the image bounds
             x1 = max(0, x1)
             y1 = max(0, y1)
-            x2 = min(self.image_Original.width, x2)
-            y2 = min(self.image_Original.height, y2)
+            x2 = min(self.image_Copy.width, x2)
+            y2 = min(self.image_Copy.height, y2)
             
-            if self.resized_image_id:
-                self.canvas.delete(self.resized_image_id)
-            self.cropped_image = self.image_Copy.crop((x1, y1, x2, y2))
-            self.cropped_image.thumbnail((300, 300))
-            self.cropped_image_display = ImageTk.PhotoImage(self.cropped_image)
-            self.resized_image_id = self.canvas.create_image(810, 0, anchor="nw", image=self.cropped_image_display)  # Display cropped image next to original
-            self.undo_stack.append(self.cropped_image.copy())  # Save state for undo
+            
+            self.working_image = self.image_Copy.crop((x1, y1, x2, y2))
+            self.cropped_image = ImageTk.PhotoImage(self.working_image)
+            if self.working_image_id:
+                self.canvas.delete(self.working_image_id)
+            self.working_image_id = self.canvas.create_image(610, 0, anchor="nw", image=self.cropped_image)  # Display cropped image next to original
+            self.undo_stack.append(self.working_image.copy())  # Save state for undo
 
     def resize_image(self, value):
-        if self.cropped_image:
-            width, height = self.cropped_image.size #retrieve dimensions of working image
+        if self.working_image_id:
+            width, height = self.working_image.size #retrieve dimensions of working image
             new_width = int(value) #retrieve resize slider value
             resize_scale = float(new_width/width)
             new_height = round(height*resize_scale)
-            resized_image = self.cropped_image.resize((new_width, new_height), Image.Resampling.LANCZOS)
-            self.resized_image_display = ImageTk.PhotoImage(resized_image)
-            if self.resized_image_id:
-                self.canvas.delete(self.resized_image_id)
-            self.resized_image_id = self.canvas.create_image(810, 0, anchor="nw", image=self.resized_image_display)
+            self.working_image = self.working_image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+            self.resized_image = ImageTk.PhotoImage(self.working_image)
+            self.canvas.delete(self.working_image_id)
+            self.working_image_id = self.canvas.create_image(610, 0, anchor="nw", image=self.resized_image)
+            self.undo_stack.append(self.working_image.copy())  # Save state for undo
 
-    def rotate_image(self):
-        global rotation_angle
-        try:
-            rotation_angle += 90
-            self.rotated_image = self.cropped_image.rotate(rotation_angle, expand=True)
-            # reset image if angle is a multiple of 360 degrees
-            if rotation_angle % 360 == 0:
-                rotation_angle = 0
-            #clear canvas    
-            if self.resized_image_id:
-                self.canvas.delete(self.resized_image_id)
+    def rotate_image(self):   
+        if self.working_image_id:
+            self.working_image = self.working_image.rotate(90, expand=True) 
             # convert the PIL image to a Tkinter PhotoImage and display it on the canvas
-            self.rotated_image_display = ImageTk.PhotoImage(self.rotated_image)
-            self.rotated_image_id = self.canvas.create_image(810, 0, anchor="nw", image=self.rotated_image_display)
-        # catches errors
-        except:
-            showerror(title='Rotate Image Error', message='Please select an image to rotate!')
-
+            self.rotated_image = ImageTk.PhotoImage(self.working_image)
+            self.canvas.delete(self.working_image_id)
+            self.working_image_id = self.canvas.create_image(610, 0, anchor="nw", image=self.rotated_image)
+            self.undo_stack.append(self.working_image.copy())  # Save state for undo
+        
     def invert_image(self):
-        if self.cropped_image:
-            self.cropped_image = ImageOps.invert(self.cropped_image.convert('RGB'))
-            self.cropped_image_display = ImageTk.PhotoImage(self.cropped_image)
-            if self.resized_image_id:
-                self.canvas.delete(self.resized_image_id)
-            self.resized_image_id = self.canvas.create_image(810, 0, anchor="nw", image=self.cropped_image_display)
-            self.undo_stack.append(self.cropped_image.copy())  # Save state for undo
+        if self.working_image_id:
+            self.working_image = ImageOps.invert(self.working_image.convert('RGB'))
+            self.inverted_image = ImageTk.PhotoImage(self.working_image)
+            self.canvas.delete(self.working_image_id)
+            self.working_image_id = self.canvas.create_image(610, 0, anchor="nw", image=self.inverted_image)
+            self.undo_stack.append(self.working_image.copy())  # Save state for undo
 
     def undo(self, event=None):
         if self.undo_stack:
             self.redo_stack.append(self.undo_stack.pop())
             if self.undo_stack:
-                self.cropped_image = self.undo_stack[-1]
-                self.cropped_image_display = ImageTk.PhotoImage(self.cropped_image)
-                if self.resized_image_id:
-                    self.canvas.delete(self.resized_image_id)
-                self.resized_image_id = self.canvas.create_image(810, 0, anchor="nw", image=self.cropped_image_display)
+                self.working_image = self.undo_stack[-1]
+                self.undo_image = ImageTk.PhotoImage(self.working_image)
+                if self.working_image_id:
+                    self.canvas.delete(self.working_image_id)
+                self.working_image_id = self.canvas.create_image(610, 0, anchor="nw", image=self.undo_image)
 
     def redo(self, event=None):
         if self.redo_stack:
-            self.cropped_image = self.redo_stack.pop()
-            self.cropped_image_display = ImageTk.PhotoImage(self.cropped_image)
-            if self.resized_image_id:
-                self.canvas.delete(self.resized_image_id)
-            self.resized_image_id = self.canvas.create_image(810, 0, anchor="nw", image=self.cropped_image_display)
-            self.undo_stack.append(self.cropped_image.copy())  # Save state for undo
+            self.working_image = self.redo_stack.pop()
+            self.redo_image = ImageTk.PhotoImage(self.working_image)
+            if self.working_image_id:
+                self.canvas.delete(self.working_image_id)
+            self.working_image_id = self.canvas.create_image(610, 0, anchor="nw", image=self.redo_image)
+            self.undo_stack.append(self.working_image.copy())  # Save state for undo
 
     def save_image(self):
-        if self.cropped_image:
+        if self.working_image_id:
             save_path = filedialog.asksaveasfilename(defaultextension=".png", filetypes=[("PNG files", "*.png"), ("JPEG files", "*.jpg"), ("All files", "*.*")])
             if save_path:
-                self.cropped_image.save(save_path)
+                self.working_image.save(save_path)
 
     def enable_draw(self):
-        if self.cropped_image:
+        if self.working_image_id:
             self.drawing = True
             self.canvas.bind("<ButtonPress-1>", self.on_button_press)
             self.canvas.bind("<B1-Motion>", self.on_mouse_drag)
@@ -234,14 +226,14 @@ class ImageDemo(EasyFrame):  # Set up the window
         self.draw_color = colorchooser.askcolor(color=self.draw_color)[1]
 
     def draw_on_image(self, x, y):
-        if self.cropped_image:
-            draw = ImageDraw.Draw(self.cropped_image)
+        if self.working_image_id:
+            draw = ImageDraw.Draw(self.working_image)
             draw.line([self.last_x, self.last_y, x, y], fill=self.draw_color, width=5)
             self.last_x, self.last_y = x, y
-            self.cropped_image_display = ImageTk.PhotoImage(self.cropped_image)
-            if self.resized_image_id:
-                self.canvas.delete(self.resized_image_id)
-            self.resized_image_id = self.canvas.create_image(810, 0, anchor="nw", image=self.cropped_image_display)
+            self.drawn_image = ImageTk.PhotoImage(self.working_image)
+            self.canvas.delete(self.working_image_id)
+            self.working_image_id = self.canvas.create_image(610, 0, anchor="nw", image=self.drawn_image)
+            self.undo_stack.append(self.working_image.copy())  # Save state for undo
 
 def main():
     app = ImageDemo()
