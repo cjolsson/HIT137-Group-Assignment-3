@@ -53,7 +53,7 @@ while True:
 
     cv2.imshow("Title of Popup Window", windowImage) # Display the image
 
-    if 0xFF == 27: # Break the loop when the Esc key is pressed
+    if cv2.waitKey(10) & 0xFF == 27: # Break the loop when the Esc key is pressed
 
 #       If the user draws the rectangle from right to left or from bottom to top, swap the coordinates
         if ix > fx:
