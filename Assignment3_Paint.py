@@ -25,6 +25,7 @@ class ImageDemo(EasyFrame):  # Set up the window
         self.rotate_button()
         self.save_button()
         self.invert_button()
+        self.greyscale_button()
         self.draw_button()
         self.color_button()
         self.canvas = tk.Canvas(self, width=1200, height=600)
@@ -47,6 +48,7 @@ class ImageDemo(EasyFrame):  # Set up the window
         self.draw_color = "black"
         self.working_image = None
         self.working_image_id = None
+        self.grey_image = None
         
     def load_button(self):  # Create the load button
         load_button = tk.Button(self, text="Select Image", command=self.load_image)
@@ -74,6 +76,10 @@ class ImageDemo(EasyFrame):  # Set up the window
     def invert_button(self):  # Create the invert button
         invert_button = tk.Button(self, text="Invert Image", command=self.invert_image)
         invert_button.pack(side=tk.TOP, pady=5)
+        
+    def greyscale_button(self):
+        grey_button = tk.Button(self, text="Grey Scale", command=self.convert_to_grey)
+        grey_button.pack(side=tk.TOP, pady=5)
 
     def draw_button(self):  # Create the draw button
         draw_button = tk.Button(self, text="Draw on Image", command=self.enable_draw)
@@ -104,6 +110,7 @@ class ImageDemo(EasyFrame):  # Set up the window
             self.canvas.create_image(0, 0, anchor="nw", image=self.image_Display)  # Display the image on the canvas
             self.canvas.image = self.image_Display  # Keep a reference to avoid garbage collection
             print("Image displayed successfully")  # Debug statement
+            print(type(self.working_image))
 
     def enable_crop(self):
         if self.image_loaded:
@@ -186,6 +193,17 @@ class ImageDemo(EasyFrame):  # Set up the window
             self.inverted_image = ImageTk.PhotoImage(self.working_image)
             self.canvas.delete(self.working_image_id)
             self.working_image_id = self.canvas.create_image(610, 0, anchor="nw", image=self.inverted_image)
+            self.undo_stack.append(self.working_image.copy())  # Save state for undo
+    
+    def convert_to_grey(self):
+        if self.working_image_id:    
+            self.grey_image = np.array(self.working_image) #convert PIL to OPENCV object
+            self.grey_image = cv2.cvtColor(self.grey_image, cv2.COLOR_RGB2BGR) 
+            self.grey_image = cv2.cvtColor(self.grey_image, cv2.COLOR_BGR2GRAY)
+            self.working_image = Image.fromarray(self.grey_image)  # convert back to PIL object
+            self.grey_image = ImageTk.PhotoImage(self.working_image) # conver to Tkinter for canvas display
+            self.canvas.delete(self.working_image_id)
+            self.working_image_id = self.canvas.create_image(610, 0, anchor="nw", image=self.grey_image)
             self.undo_stack.append(self.working_image.copy())  # Save state for undo
 
     def undo(self, event=None):
