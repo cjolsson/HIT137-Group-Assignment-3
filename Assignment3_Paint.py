@@ -18,7 +18,6 @@ class ImageDemo(EasyFrame):  # Set up the window
     def __init__(self):
         EasyFrame.__init__(self, title="Demonstrate Image Handling", width=1200, height=800, background="white")
         self.setResizable(True)
-
         self.load_button()
         self.crop_button()
         self.resize_slider()
@@ -28,6 +27,8 @@ class ImageDemo(EasyFrame):  # Set up the window
         self.greyscale_button()
         self.draw_button()
         self.color_button()
+        self.undo_button() 
+        self.redo_button()
         self.canvas = tk.Canvas(self, width=1200, height=600)
         self.canvas.pack()
         self.canvas.bind("<ButtonPress-1>", self.on_button_press)
@@ -48,7 +49,7 @@ class ImageDemo(EasyFrame):  # Set up the window
         self.draw_color = "black"
         self.working_image = None
         self.working_image_id = None
-        self.grey_image = None
+        
         
     def load_button(self):  # Create the load button
         load_button = tk.Button(self, text="Select Image", command=self.load_image)
@@ -88,6 +89,14 @@ class ImageDemo(EasyFrame):  # Set up the window
     def color_button(self):  # Create the color button
         color_button = tk.Button(self, text="Select Color", command=self.select_color)
         color_button.pack(side=tk.TOP, pady=5)
+    
+    def undo_button(self):  # Create the undo button
+        undo_button = tk.Button(self, text="Undo ↩", command=self.undo)
+        undo_button.pack(side=tk.TOP, pady=5)
+
+    def redo_button(self):  # Create the undo button
+        redo_button = tk.Button(self, text="Redo ↪", command=self.redo)
+        redo_button.pack(side=tk.TOP, pady=5)
 
     def load_image(self):  # Find and display the image.
         file_path = filedialog.askopenfilename(title="Select an Image", filetypes=[("Image Files", "*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tiff")])
@@ -110,8 +119,7 @@ class ImageDemo(EasyFrame):  # Set up the window
             self.canvas.create_image(0, 0, anchor="nw", image=self.image_Display)  # Display the image on the canvas
             self.canvas.image = self.image_Display  # Keep a reference to avoid garbage collection
             print("Image displayed successfully")  # Debug statement
-            print(type(self.working_image))
-
+            
     def enable_crop(self):
         if self.image_loaded:
             self.drawing = False
@@ -158,7 +166,6 @@ class ImageDemo(EasyFrame):  # Set up the window
             x2 = min(self.image_Copy.width, x2)
             y2 = min(self.image_Copy.height, y2)
             
-            
             self.working_image = self.image_Copy.crop((x1, y1, x2, y2))
             self.cropped_image = ImageTk.PhotoImage(self.working_image)
             if self.working_image_id:
@@ -182,28 +189,28 @@ class ImageDemo(EasyFrame):  # Set up the window
         if self.working_image_id:
             self.working_image = self.working_image.rotate(90, expand=True) 
             # convert the PIL image to a Tkinter PhotoImage and display it on the canvas
-            self.rotated_image = ImageTk.PhotoImage(self.working_image)
+            self.working_image_tk = ImageTk.PhotoImage(self.working_image)
             self.canvas.delete(self.working_image_id)
-            self.working_image_id = self.canvas.create_image(610, 0, anchor="nw", image=self.rotated_image)
+            self.working_image_id = self.canvas.create_image(610, 0, anchor="nw", image=self.working_image_tk)
             self.undo_stack.append(self.working_image.copy())  # Save state for undo
         
     def invert_image(self):
         if self.working_image_id:
             self.working_image = ImageOps.invert(self.working_image.convert('RGB'))
-            self.inverted_image = ImageTk.PhotoImage(self.working_image)
+            self.working_image_tk = ImageTk.PhotoImage(self.working_image)
             self.canvas.delete(self.working_image_id)
-            self.working_image_id = self.canvas.create_image(610, 0, anchor="nw", image=self.inverted_image)
+            self.working_image_id = self.canvas.create_image(610, 0, anchor="nw", image=self.working_image_tk)
             self.undo_stack.append(self.working_image.copy())  # Save state for undo
     
     def convert_to_grey(self):
         if self.working_image_id:    
-            self.grey_image = np.array(self.working_image) #convert PIL to OPENCV object
-            self.grey_image = cv2.cvtColor(self.grey_image, cv2.COLOR_RGB2BGR) 
-            self.grey_image = cv2.cvtColor(self.grey_image, cv2.COLOR_BGR2GRAY)
-            self.working_image = Image.fromarray(self.grey_image)  # convert back to PIL object
-            self.grey_image = ImageTk.PhotoImage(self.working_image) # conver to Tkinter for canvas display
+            self.grey_image_cv = np.array(self.working_image) #convert PIL to OPENCV object
+            self.grey_image_cv = cv2.cvtColor(self.grey_image_cv, cv2.COLOR_RGB2BGR) 
+            self.grey_image_cv = cv2.cvtColor(self.grey_image_cv, cv2.COLOR_BGR2GRAY)
+            self.working_image = Image.fromarray(self.grey_image_cv)  # convert back to PIL object
+            self.working_image_tk = ImageTk.PhotoImage(self.working_image) # conver to Tkinter for canvas display
             self.canvas.delete(self.working_image_id)
-            self.working_image_id = self.canvas.create_image(610, 0, anchor="nw", image=self.grey_image)
+            self.working_image_id = self.canvas.create_image(610, 0, anchor="nw", image=self.working_image_tk)
             self.undo_stack.append(self.working_image.copy())  # Save state for undo
 
     def undo(self, event=None):
@@ -211,18 +218,18 @@ class ImageDemo(EasyFrame):  # Set up the window
             self.redo_stack.append(self.undo_stack.pop())
             if self.undo_stack:
                 self.working_image = self.undo_stack[-1]
-                self.undo_image = ImageTk.PhotoImage(self.working_image)
+                self.working_image_tk = ImageTk.PhotoImage(self.working_image)
                 if self.working_image_id:
                     self.canvas.delete(self.working_image_id)
-                self.working_image_id = self.canvas.create_image(610, 0, anchor="nw", image=self.undo_image)
+                self.working_image_id = self.canvas.create_image(610, 0, anchor="nw", image=self.working_image_tk)
 
     def redo(self, event=None):
         if self.redo_stack:
             self.working_image = self.redo_stack.pop()
-            self.redo_image = ImageTk.PhotoImage(self.working_image)
+            self.working_image_tk = ImageTk.PhotoImage(self.working_image)
             if self.working_image_id:
                 self.canvas.delete(self.working_image_id)
-            self.working_image_id = self.canvas.create_image(610, 0, anchor="nw", image=self.redo_image)
+            self.working_image_id = self.canvas.create_image(610, 0, anchor="nw", image=self.working_image_tk)
             self.undo_stack.append(self.working_image.copy())  # Save state for undo
 
     def save_image(self):
@@ -248,9 +255,9 @@ class ImageDemo(EasyFrame):  # Set up the window
             draw = ImageDraw.Draw(self.working_image)
             draw.line([self.last_x, self.last_y, x, y], fill=self.draw_color, width=5)
             self.last_x, self.last_y = x, y
-            self.drawn_image = ImageTk.PhotoImage(self.working_image)
+            self.working_image_tk = ImageTk.PhotoImage(self.working_image)
             self.canvas.delete(self.working_image_id)
-            self.working_image_id = self.canvas.create_image(610, 0, anchor="nw", image=self.drawn_image)
+            self.working_image_id = self.canvas.create_image(610, 0, anchor="nw", image=self.working_image_tk)
             self.undo_stack.append(self.working_image.copy())  # Save state for undo
 
 def main():
