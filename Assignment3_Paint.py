@@ -85,24 +85,13 @@ class ImageDemo(EasyFrame):  # Set up the window
         color_button = tk.Button(self, text="Select Color", command=self.select_color)
         color_button.pack(side=tk.TOP, pady=5)
 
-    def greyscale_button(self):  # Create the greyscale button
+    def greyscale_button(self):
         grey_button = tk.Button(self, text="Grey Scale", command=self.convert_to_grey)
         grey_button.pack(side=tk.TOP, pady=5)
 
     def convert_to_grey(self):
         if hasattr(self, 'cropped_image'):
-            if isinstance(self.cropped_image, Image.Image):
-                # Convert PIL image to NumPy array
-                cropped_image_np = np.array(self.cropped_image)
-            elif isinstance(self.cropped_image, np.ndarray):
-                # If it's already a NumPy array, use it directly
-                cropped_image_np = self.cropped_image
-            else:
-                messagebox.showerror("Error", "Cropped image is not in the correct format")
-                return
-
-            # Convert the image to grayscale
-            grey_image = cv2.cvtColor(cropped_image_np, cv2.COLOR_BGR2GRAY)
+            grey_image = cv2.cvtColor(self.cropped_image, cv2.COLOR_BGR2GRAY)
             self.display_image(grey_image)
         else:
             messagebox.showerror("Error", "No cropped image to convert")
@@ -121,12 +110,16 @@ class ImageDemo(EasyFrame):  # Set up the window
         if file_path:
             file_path = os.path.normpath(file_path)
             try:
-                self.image_Original = Image.open(file_path)
-                print(f"Image loaded successfully: {file_path}")
+                self.cropped_image = cv2.imread(file_path)  # Use OpenCV to read the image
+                if self.cropped_image is None:
+                    raise ValueError("Failed to load image")
                 self.image_loaded = True
+                self.display_image(cv2.cvtColor(self.cropped_image, cv2.COLOR_BGR2RGB))  # Display the image in RGB format
+                print(f"Image loaded successfully: {file_path}")
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to open image: {e}")
                 return
+            
         self.image_label.config(text=f"Loaded Image: {file_path.split('/')[-1]}")
         self.image_Copy = self.image_Original.copy()
         self.image_Copy.thumbnail((600, 600))
