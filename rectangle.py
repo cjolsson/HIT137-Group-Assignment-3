@@ -62,8 +62,3 @@ if iy > fy:
     iy, fy = fy, iy
     
 cv2.destroyAllWindows() # Close all windows
-    
-    if cv2.waitKey(10) & 0xFF == 27: # Break the loop when the Esc key is pressed
-        break
-
-cv2.destroyAllWindows() # Close all windows
