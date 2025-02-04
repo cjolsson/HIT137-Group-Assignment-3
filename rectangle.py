@@ -51,14 +51,16 @@ cv2.setMouseCallback("Title of Popup Window", draw_Rectangle) # Connect the mous
 
 while True:
 
-    cv2.imshow("Title of Popup Window", img) # Display the image
-    
-    if cv2.waitKey(10) & 0xFF == 27: # Break the loop when the Esc key is pressed
-        break
+    cv2.imshow("Title of Popup Window", windowImage) # Display the image
 
-if ix > fx:
-    ix, fx = fx, ix
-if iy > fy:
-    iy, fy = fy, iy
+    if 0xFF == 27: # Break the loop when the Esc key is pressed
+
+#       If the user draws the rectangle from right to left or from bottom to top, swap the coordinates
+        if ix > fx:
+            ix, fx = fx, ix
+        if iy > fy:
+            iy, fy = fy, iy
+
+        break
     
 cv2.destroyAllWindows() # Close all windows
