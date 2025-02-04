@@ -27,8 +27,10 @@ class ImageDemo(EasyFrame):  # Set up the window
         self.invert_button()
         self.draw_button()
         self.color_button()
+        self.greyscale_button()
         self.canvas = tk.Canvas(self, width=1200, height=600)
         self.canvas.pack()
+
         self.canvas.bind("<ButtonPress-1>", self.on_button_press)
         self.canvas.bind("<B1-Motion>", self.on_mouse_drag)
         self.canvas.bind("<ButtonRelease-1>", self.on_button_release)
@@ -83,27 +85,56 @@ class ImageDemo(EasyFrame):  # Set up the window
         color_button = tk.Button(self, text="Select Color", command=self.select_color)
         color_button.pack(side=tk.TOP, pady=5)
 
-    def load_image(self):  # Find and display the image.
+    def greyscale_button(self):  # Create the greyscale button
+        grey_button = tk.Button(self, text="Grey Scale", command=self.convert_to_grey)
+        grey_button.pack(side=tk.TOP, pady=5)
+
+    def convert_to_grey(self):
+        if hasattr(self, 'cropped_image'):
+            if isinstance(self.cropped_image, Image.Image):
+                # Convert PIL image to NumPy array
+                cropped_image_np = np.array(self.cropped_image)
+            elif isinstance(self.cropped_image, np.ndarray):
+                # If it's already a NumPy array, use it directly
+                cropped_image_np = self.cropped_image
+            else:
+                messagebox.showerror("Error", "Cropped image is not in the correct format")
+                return
+
+            # Convert the image to grayscale
+            grey_image = cv2.cvtColor(cropped_image_np, cv2.COLOR_BGR2GRAY)
+            self.display_image(grey_image)
+        else:
+            messagebox.showerror("Error", "No cropped image to convert")
+
+    def display_image(self, image):
+        if len(image.shape) == 2:  # If the image is grayscale
+            self.image = Image.fromarray(image, mode='L')
+        else:
+            self.image = Image.fromarray(image)
+        self.image_tk = ImageTk.PhotoImage(self.image)
+        self.canvas.create_image(0, 0, anchor=tk.NW, image=self.image_tk)
+        self.canvas.image = self.image_tk  # Keep a reference to avoid garbage collection
+
+    def load_image(self):
         file_path = filedialog.askopenfilename(title="Select an Image", filetypes=[("Image Files", "*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tiff")])
         if file_path:
-            file_path = os.path.normpath(file_path)  # Normalize the file path avoiding slashes and spaces
+            file_path = os.path.normpath(file_path)
             try:
-                self.image_Original = Image.open(file_path)  # Check to ensure file path is usable
-                print(f"Image loaded successfully: {file_path}")  # Debug statement
+                self.image_Original = Image.open(file_path)
+                print(f"Image loaded successfully: {file_path}")
                 self.image_loaded = True
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to open image: {e}")
                 return
-            # Extract image label
-            self.image_label.config(text=f"Loaded Image: {file_path.split('/')[-1]}")
-            # Create and display the image
-            self.image_Copy = self.image_Original.copy()
-            self.image_Copy.thumbnail((600, 600))  # Size image to fit canvas
-            self.image_Display = ImageTk.PhotoImage(self.image_Copy)  # Display the image
+        self.image_label.config(text=f"Loaded Image: {file_path.split('/')[-1]}")
+        self.image_Copy = self.image_Original.copy()
+        self.image_Copy.thumbnail((600, 600))
+        self.image_Display = ImageTk.PhotoImage(self.image_Copy)
+        self.canvas.create_image(0, 0, anchor="nw", image=self.image_Display)
+        self.canvas.image = self.image_Display
+        print("Image displayed successfully")
 
-            self.canvas.create_image(0, 0, anchor="nw", image=self.image_Display)  # Display the image on the canvas
-            self.canvas.image = self.image_Display  # Keep a reference to avoid garbage collection
-            print("Image displayed successfully")  # Debug statement
 
     def enable_crop(self):
         if self.image_loaded:
