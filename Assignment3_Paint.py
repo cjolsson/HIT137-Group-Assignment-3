@@ -54,12 +54,12 @@ class ImageDemo(EasyFrame):  # Set up the window
             ("Invert Image", self.invert_image),
             ("Grey Scale", self.convert_to_grey),
             ("Draw on Image", self.enable_draw),
-            ("Select Color", self.select_color)
+            ("Select Drawing Color", self.select_color)
         ]   
         for text, command in buttons:
             tk.Button(button_frame, text=text, command=command).pack(side=tk.LEFT, padx=5)
         
-        self.slider = tk.Scale(button_frame, from_=1, to=600, orient=tk.HORIZONTAL, command=self.resize_image)
+        self.slider = tk.Scale(button_frame, from_=1, to=600, orient=tk.HORIZONTAL, command=self.resize_image, label="Resize Image")
         self.slider.set(300)
         self.slider.pack(side=tk.LEFT, padx=5)
         
