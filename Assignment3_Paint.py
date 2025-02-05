@@ -13,24 +13,15 @@ import tkinter as tk
 """Ensure to install pip install tk in git bash"""
 from tkinter import filedialog, messagebox, colorchooser
 from PIL import Image, ImageTk, ImageOps, ImageFilter, ImageGrab, ImageDraw
+"""Ensure to install pip install pywin32"""
+import win32api
 
 class ImageDemo(EasyFrame):  # Set up the window
     def __init__(self):
-        EasyFrame.__init__(self, title="Demonstrate Image Handling", width=1200, height=800, background="white")
-        self.setResizable(True)
-        self.load_button()
-        self.crop_button()
-        self.resize_slider()
-        self.rotate_button()
-        self.save_button()
-        self.invert_button()
-        self.greyscale_button()
-        self.draw_button()
-        self.color_button()
-        self.undo_button() 
-        self.redo_button()
-        self.canvas = tk.Canvas(self, width=1200, height=600)
-        self.canvas.pack()
+        EasyFrame.__init__(self, title="Demonstrate Image Handling", width=1200, height=700, background="white")
+        self.setResizable(False) # prevent user from changing interface size
+        self.create_buttons()
+        
         self.canvas.bind("<ButtonPress-1>", self.on_button_press)
         self.canvas.bind("<B1-Motion>", self.on_mouse_drag)
         self.canvas.bind("<ButtonRelease-1>", self.on_button_release)
@@ -50,54 +41,39 @@ class ImageDemo(EasyFrame):  # Set up the window
         self.working_image = None
         self.working_image_id = None
         
+    def create_buttons(self):
+        button_frame = tk.Frame(self)  # Create a frame for buttons
+        button_frame.pack(side=tk.TOP, fill=tk.X, pady=5)  # Place at the top  
+        buttons = [
+            ("Select Image", self.load_image),
+            ("Save Image", self.save_image),
+            ("Undo ↩", self.undo),
+            ("Redo ↪", self.redo),
+            ("Crop Image", self.enable_crop),
+            ("Rotate", self.rotate_image),
+            ("Invert Image", self.invert_image),
+            ("Grey Scale", self.convert_to_grey),
+            ("Draw on Image", self.enable_draw),
+            ("Select Color", self.select_color)
+        ]   
+        for text, command in buttons:
+            tk.Button(button_frame, text=text, command=command).pack(side=tk.LEFT, padx=5)
         
-    def load_button(self):  # Create the load button
-        load_button = tk.Button(self, text="Select Image", command=self.load_image)
-        self.image_label = tk.Label(self)  # Image label
-        self.image_label.pack(side=tk.TOP, pady=5)
-        load_button.pack(side=tk.TOP, pady=5)
-
-    def crop_button(self):  # Create the crop button
-        crop_button = tk.Button(self, text="Crop Image", command=self.enable_crop)
-        crop_button.pack(side=tk.TOP, pady=5)
-
-    def resize_slider(self):  # Create the resize slider
-        self.slider = tk.Scale(self, from_=1, to=600, orient=tk.HORIZONTAL, command=self.resize_image)
-        self.slider.set(300)  # Set default value to 300
-        self.slider.pack(side=tk.TOP, pady=5)
-
-    def rotate_button(self):  # Create the rotate button
-        rotate_button = tk.Button(self, text="Rotate", command=self.rotate_image)
-        rotate_button.pack(side=tk.TOP, pady=5)
-
-    def save_button(self):  # Create the save button
-        save_button = tk.Button(self, text="Save Image", command=self.save_image)
-        save_button.pack(side=tk.TOP, pady=5)
-
-    def invert_button(self):  # Create the invert button
-        invert_button = tk.Button(self, text="Invert Image", command=self.invert_image)
-        invert_button.pack(side=tk.TOP, pady=5)
+        self.slider = tk.Scale(button_frame, from_=1, to=600, orient=tk.HORIZONTAL, command=self.resize_image)
+        self.slider.set(300)
+        self.slider.pack(side=tk.LEFT, padx=5)
         
-    def greyscale_button(self):
-        grey_button = tk.Button(self, text="Grey Scale", command=self.convert_to_grey)
-        grey_button.pack(side=tk.TOP, pady=5)
+        label_frame = tk.Frame(self)
+        label_frame.pack(side=tk.TOP, fill=tk.X, pady=5)    
+        self.image_label = tk.Label(label_frame, text="No image loaded")  # Image label
+        self.image_label.pack(side=tk.LEFT, pady=5)
 
-    def draw_button(self):  # Create the draw button
-        draw_button = tk.Button(self, text="Draw on Image", command=self.enable_draw)
-        draw_button.pack(side=tk.TOP, pady=5)
-
-    def color_button(self):  # Create the color button
-        color_button = tk.Button(self, text="Select Color", command=self.select_color)
-        color_button.pack(side=tk.TOP, pady=5)
+        canvas_frame = tk.Frame(self)
+        canvas_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        self.canvas = tk.Canvas(canvas_frame, width=1200, height=600)
+        self.canvas.pack(pady=5)
+   
     
-    def undo_button(self):  # Create the undo button
-        undo_button = tk.Button(self, text="Undo ↩", command=self.undo)
-        undo_button.pack(side=tk.TOP, pady=5)
-
-    def redo_button(self):  # Create the undo button
-        redo_button = tk.Button(self, text="Redo ↪", command=self.redo)
-        redo_button.pack(side=tk.TOP, pady=5)
-
     def load_image(self):  # Find and display the image.
         file_path = filedialog.askopenfilename(title="Select an Image", filetypes=[("Image Files", "*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tiff")])
         if file_path:
