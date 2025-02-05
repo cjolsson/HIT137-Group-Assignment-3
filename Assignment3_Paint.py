@@ -1,11 +1,12 @@
-"""Ensure to install pip install breezypythongui in git bash"""
+import breezypythongui as bpg
+"""Ensure to install pip install breezypythongui """
 from breezypythongui import EasyFrame
 import cv2  # OpenCV
-"""Ensure to install pip install opencv-python in git bash"""
+"""Ensure to install pip install opencv-python """
 import numpy as np
 import os
 import tkinter as tk
-"""Ensure to install pip install tk in git bash"""
+"""Ensure to install pip install tk """
 from tkinter import filedialog, messagebox, colorchooser
 from PIL import Image, ImageTk, ImageOps, ImageFilter, ImageGrab, ImageDraw
 
