@@ -1,16 +1,16 @@
 import breezypythongui as bpg
-"""Ensure to install pip install breezypythongui in git bash"""
+"""Ensure to install pip install breezypythongui """
 from breezypythongui import EasyFrame
 import cv2  # OpenCV
-"""Ensure to install pip install opencv-python in git bash"""
+"""Ensure to install pip install opencv-python """
 import numpy as np
 import os
 import matplotlib.pyplot as plt
-"""Ensure to install pip install matplotlib in git bash"""
+"""Ensure to install pip install matplotlib """
 from matplotlib.colors import LogNorm
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import tkinter as tk
-"""Ensure to install pip install tk in git bash"""
+"""Ensure to install pip install tk """
 from tkinter import filedialog, messagebox, colorchooser
 from PIL import Image, ImageTk, ImageOps, ImageFilter, ImageGrab, ImageDraw
 """Ensure to install pip install pywin32"""
