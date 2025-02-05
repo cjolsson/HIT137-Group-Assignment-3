@@ -16,9 +16,7 @@ class ImageDemo(EasyFrame):  # Set up the window
         EasyFrame.__init__(self, title="Demonstrate Image Handling", width=1200, height=700, background="white")
         self.setResizable(False) # prevent user from changing interface size
         self.create_buttons()
-        self.canvas.bind("<ButtonPress-1>", self.on_button_press)
-        self.canvas.bind("<B1-Motion>", self.on_mouse_drag)
-        self.canvas.bind("<ButtonRelease-1>", self.on_button_release)
+        self.bind_canvas_events(self.on_button_press, self.on_mouse_drag, self.on_button_release)
         self.bind_all("<Control-z>", self.undo)
         self.bind_all("<Control-y>", self.redo)
         self.rect = self.start_x = self.start_y = self.end_x = self.end_y = None
@@ -60,8 +58,12 @@ class ImageDemo(EasyFrame):  # Set up the window
         canvas_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         self.canvas = tk.Canvas(canvas_frame, width=1200, height=600)
         self.canvas.pack(pady=5)
-   
-    
+
+    def bind_canvas_events(self, press, drag, release): # centralise binding operations
+        self.canvas.bind("<ButtonPress-1>", press)
+        self.canvas.bind("<B1-Motion>", drag)
+        self.canvas.bind("<ButtonRelease-1>", release)
+       
     def load_image(self):  # Find and display the image.
         file_path = filedialog.askopenfilename(title="Select an Image", filetypes=[("Image Files", "*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tiff")])
         if file_path:
@@ -87,9 +89,7 @@ class ImageDemo(EasyFrame):  # Set up the window
             messagebox.showerror("Error", "Please load an image first.")
         else:
             self.drawing = False
-            self.canvas.bind("<ButtonPress-1>", self.on_button_press)
-            self.canvas.bind("<B1-Motion>", self.on_mouse_drag)
-            self.canvas.bind("<ButtonRelease-1>", self.on_button_release)  
+            self.bind_canvas_events(self.on_button_press, self.on_mouse_drag, self.on_button_release)  
 
     def on_button_press(self, event):
         if self.drawing:
@@ -200,9 +200,7 @@ class ImageDemo(EasyFrame):  # Set up the window
             messagebox.showerror("Error", "Please crop an image first.")
         else:
             self.drawing = True
-            self.canvas.bind("<ButtonPress-1>", self.on_button_press)
-            self.canvas.bind("<B1-Motion>", self.on_mouse_drag)
-            self.canvas.bind("<ButtonRelease-1>", self.on_button_release)
+            self.bind_canvas_events(self.on_button_press, self.on_mouse_drag, self.on_button_release)
         
     def select_color(self):
         self.draw_color = colorchooser.askcolor(color=self.draw_color)[1]
