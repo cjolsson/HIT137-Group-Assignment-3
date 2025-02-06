@@ -17,6 +17,14 @@ class ImageDemo(EasyFrame):  # Set up the window
         self.setResizable(False) # prevent user from changing interface size
         self.create_buttons()
         self.bind_canvas_events(self.on_button_press, self.on_mouse_drag, self.on_button_release)
+        self.bind_all("<Alt-l>"    , self.load_image)
+        self.bind_all("<Alt-e>"    , self.enable_crop)
+        self.bind_all("<Alt-r>"    , self.rotate_image)
+        self.bind_all("<Alt-i>"    , self.invert_image)
+        self.bind_all("<Alt-g>"    , self.convert_to_grey)
+        self.bind_all("<Alt-d>"    , self.enable_draw)
+        self.bind_all("<Alt-c>"    , self.select_color)
+        self.bind_all("<Control-s>", self.save_image)
         self.bind_all("<Control-z>", self.undo)
         self.bind_all("<Control-y>", self.redo)
         self.rect = self.start_x = self.start_y = self.end_x = self.end_y = None
@@ -26,23 +34,21 @@ class ImageDemo(EasyFrame):  # Set up the window
         self.drawing = False
         self.draw_color = "black"
         self.working_image = self.working_image_id = None
-        
-        self.canvas.create_text(10, 525, anchor='nw', text="Shortcut keys - Ctrl+Z: Undo, Ctrl+Y: Redo", fill="black")
     
     def create_buttons(self):
         button_frame = tk.Frame(self)  # Create a frame for buttons
         button_frame.pack(side=tk.TOP, fill=tk.X, pady=5)  # Place at the top  
         buttons = [
-            ("Select Image", self.load_image),
-            ("Crop Image", self.enable_crop),
-            ("Rotate", self.rotate_image),
-            ("Invert Image", self.invert_image),
-            ("Grey Scale", self.convert_to_grey),
-            ("Draw on Image", self.enable_draw),
-            ("Select Drawing Color", self.select_color),
-            ("Save Image", self.save_image),
-            ("Undo ↩", self.undo),
-            ("Redo ↪", self.redo)
+            ("Select Image\n<Alt+l>"         , self.load_image),
+            ("Crop Image\n<Alt+e>"           , self.enable_crop),
+            ("Rotate Image\n<Alt+r>"         , self.rotate_image),
+            ("Invert Image\n<Alt+i>"         , self.invert_image),
+            ("Grey Scale\n<Alt+g>"           , self.convert_to_grey),
+            ("Draw on Image\n<Alt+d>"        , self.enable_draw),
+            ("Select Drawing Colour\n<Alt+c>", self.select_color),
+            ("Save Image\nCtrl+s"            , self.save_image),
+            ("Undo ↩\nCtrl+z"               , self.undo),
+            ("Redo ↪\nCtrl+y"               , self.redo)
         ]   
         for text, command in buttons:
             tk.Button(button_frame, text=text, command=command).pack(side=tk.LEFT, padx=5)
@@ -66,7 +72,7 @@ class ImageDemo(EasyFrame):  # Set up the window
         self.canvas.bind("<B1-Motion>", drag)
         self.canvas.bind("<ButtonRelease-1>", release)
        
-    def load_image(self):  # Find and display the image.
+    def load_image(self, event=None):  # Find and display the image.
         file_path = filedialog.askopenfilename(title="Select an Image", filetypes=[("Image Files", "*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tiff")])
         if file_path:
             file_path = os.path.normpath(file_path)  # Normalize the file path avoiding slashes and spaces
@@ -86,7 +92,7 @@ class ImageDemo(EasyFrame):  # Set up the window
             self.canvas.create_image(0, 0, anchor="nw", image=self.image_Copy_tk)  # Display the image on the canvas
             self.canvas.image = self.image_Copy_tk  # Keep a reference to avoid garbage collection
             
-    def enable_crop(self):
+    def enable_crop(self, event=None):
         if not self.image_loaded:
             messagebox.showerror("Error", "Please load an image first.")
         else:
@@ -150,21 +156,21 @@ class ImageDemo(EasyFrame):  # Set up the window
                 self.working_image = self.working_image.resize((new_width, new_height), Image.Resampling.LANCZOS)
                 self.display_image()
             
-    def rotate_image(self):   
+    def rotate_image(self, event=None):   
         if not self.working_image_id:
             messagebox.showerror("Error", "Please crop an image first.")
         else:
             self.working_image = self.working_image.rotate(90, expand=True) 
             self.display_image()  
             
-    def invert_image(self):
+    def invert_image(self, event=None):
         if not self.working_image_id:
             messagebox.showerror("Error", "Please crop an image first.")
         else:
             self.working_image = ImageOps.invert(self.working_image.convert('RGB'))
             self.display_image() 
             
-    def convert_to_grey(self):
+    def convert_to_grey(self, event=None):
         if not self.working_image_id:
             messagebox.showerror("Error", "Please crop an image first.")
         else:   
@@ -189,7 +195,7 @@ class ImageDemo(EasyFrame):  # Set up the window
             self.working_image = self.redo_stack.pop()
             self.display_image()
 
-    def save_image(self):
+    def save_image(self, event=None):
         if not self.working_image_id:
             messagebox.showerror("Error", "Please crop an image first.")
         else:
@@ -197,14 +203,14 @@ class ImageDemo(EasyFrame):  # Set up the window
             if save_path:
                 self.working_image.save(save_path)
 
-    def enable_draw(self):
+    def enable_draw(self, event=None):
         if not self.working_image_id:
             messagebox.showerror("Error", "Please crop an image first.")
         else:
             self.drawing = True
             self.bind_canvas_events(self.on_button_press, self.on_mouse_drag, self.on_button_release)
         
-    def select_color(self):
+    def select_color(self, event=None):
         self.draw_color = colorchooser.askcolor(color=self.draw_color)[1]
 
     def draw_on_image(self, x, y):
