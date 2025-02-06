@@ -27,6 +27,8 @@ class ImageDemo(EasyFrame):  # Set up the window
         self.draw_color = "black"
         self.working_image = self.working_image_id = None
         
+        self.canvas.create_text(10, 525, anchor='nw', text="Shortcut keys - Ctrl+Z: Undo, Ctrl+Y: Redo", fill="black")
+    
     def create_buttons(self):
         button_frame = tk.Frame(self)  # Create a frame for buttons
         button_frame.pack(side=tk.TOP, fill=tk.X, pady=5)  # Place at the top  
