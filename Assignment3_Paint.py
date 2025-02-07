@@ -145,16 +145,23 @@ class ImageDemo(EasyFrame):  # Set up the window
             self.undo_stack.append(self.working_image.copy())  # Save state for undo     
 
     def resize_image(self, value):
-        if self.image_loaded: 
+        if self.image_loaded:
             if not self.working_image_id:
                 messagebox.showerror("Error", "Please crop an image first.")
             else:
-                width, height = self.working_image.size #retrieve dimensions of working image
-                new_width = int(value) #retrieve resize slider value
-                resize_scale = float(new_width/width) # compute scale to keep aspect ratio when resizing
-                new_height = round(height*resize_scale) 
-                self.working_image = self.working_image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+                new_width = int(value)
+                original_width, original_height = self.image_Original.size
+                resize_scale = new_width / original_width
+                new_height = round(original_height * resize_scale)
+
+                # If scaling up, restore from original
+                if new_width > self.working_image.width:
+                    self.working_image = self.image_Original.resize((new_width, new_height), Image.Resampling.LANCZOS)
+                else:
+                    self.working_image = self.working_image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+
                 self.display_image()
+
             
     def rotate_image(self, event=None):   
         if not self.working_image_id:
