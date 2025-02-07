@@ -53,7 +53,7 @@ class ImageDemo(EasyFrame):  # Set up the window
         for text, command in buttons:
             tk.Button(button_frame, text=text, command=command).pack(side=tk.LEFT, padx=5)
         # Resizing slider
-        self.slider = tk.Scale(button_frame, from_=1, to=600, orient=tk.HORIZONTAL, 
+        self.slider = tk.Scale(button_frame, from_=100, to=600, orient=tk.HORIZONTAL, 
                        command=self.resize_image, label="Resize Image")
         self.slider.set(300)  # Default slider value
         self.slider.pack(side=tk.LEFT, padx=5)
