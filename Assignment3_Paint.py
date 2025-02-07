@@ -52,16 +52,17 @@ class ImageDemo(EasyFrame):  # Set up the window
         ]   
         for text, command in buttons:
             tk.Button(button_frame, text=text, command=command).pack(side=tk.LEFT, padx=5)
-        # Insert resizing slider
-        self.slider = tk.Scale(button_frame, from_=1, to=600, orient=tk.HORIZONTAL, command=self.resize_image, label="Resize Image")
-        self.slider.set(300)
+        # Resizing slider
+        self.slider = tk.Scale(button_frame, from_=1, to=600, orient=tk.HORIZONTAL, 
+                       command=self.resize_image, label="Resize Image")
+        self.slider.set(300)  # Default slider value
         self.slider.pack(side=tk.LEFT, padx=5)
-        # Insert Image label
+        # Image label
         label_frame = tk.Frame(self)
         label_frame.pack(side=tk.TOP, fill=tk.X, pady=5)    
         self.image_label = tk.Label(label_frame, text="No image loaded")  # Image label
         self.image_label.pack(side=tk.LEFT, pady=5)
-        # Insert working canvas
+        # Working canvas
         canvas_frame = tk.Frame(self)
         canvas_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         self.canvas = tk.Canvas(canvas_frame, width=1200, height=600)
@@ -139,28 +140,37 @@ class ImageDemo(EasyFrame):  # Set up the window
             self.display_image()
 
     def display_image(self):
-            self.working_image_tk = ImageTk.PhotoImage(self.working_image) # creates tkinter object
-            self.canvas.delete(self.working_image_id) # deletes existing image on canvas
-            self.working_image_id = self.canvas.create_image(610, 0, anchor="nw", image=self.working_image_tk) # displays new image on canvas
-            self.undo_stack.append(self.working_image.copy())  # Save state for undo     
-
+        self.working_image_tk = ImageTk.PhotoImage(self.working_image)  # Convert to tkinter-compatible image
+        self.canvas.delete(self.working_image_id)  # Remove previous image from the canvas
+        self.working_image_id = self.canvas.create_image(610, 0, anchor="nw", image=self.working_image_tk)  # Draw the new image
+        self.canvas.image = self.working_image_tk  # Keep a reference
+  
     def resize_image(self, value):
         if self.image_loaded:
-            if not self.working_image_id:
+        # Ensure we're resizing the cropped image (not the original)
+            if not self.working_image:
                 messagebox.showerror("Error", "Please crop an image first.")
             else:
+            # Convert slider value to integer
                 new_width = int(value)
-                original_width, original_height = self.image_Original.size
+            
+            # Get the current dimensions of the cropped image
+                original_width, original_height = self.working_image.size
+            
+            # Calculate new height based on the new width to maintain aspect ratio
                 resize_scale = new_width / original_width
                 new_height = round(original_height * resize_scale)
+            
+            # If scaling down too much, use the original image instead (prevents excessive blur)
+            if new_width < 100:
+                messagebox.showinfo("Warning", "Image too small, use a larger value to preserve quality.")
+                return
 
-                # If scaling up, restore from original
-                if new_width > self.working_image.width:
-                    self.working_image = self.image_Original.resize((new_width, new_height), Image.Resampling.LANCZOS)
-                else:
-                    self.working_image = self.working_image.resize((new_width, new_height), Image.Resampling.LANCZOS)
-
-                self.display_image()
+            # Resize the image using LANCZOS resampling (high quality)
+            self.working_image = self.working_image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+            
+            # Display the resized image
+            self.display_image()
 
             
     def rotate_image(self, event=None):   
